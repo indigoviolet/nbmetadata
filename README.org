@@ -1,0 +1,44 @@
+
+* nbmetadata
+
+Modify Jupyter notebook metadata via cell comments
+
+* Notes
+
+
+** goals
+
+- provide base config, allow overrides and additions
+- config should give mapping from comment tag -> json
+- +mapping should be able to take arg => config needs to contain functions+
+
+
+*** approach1
+
+- top level function with arg -> returns all mappings
+- construct snippet as {'actual_tag': config(arg)[tag]} and evaluate it
+
+
+
+
+
+
+
+
+- base.jsonnet is the base config
+- another config can be provided
+- create a combined snippet 'user + base' or just use base & eval with null arg
+- this gives us the prefix
+- now we parse the notebook looking for metadata comments, and construct a new snippet with all the actual comments, and
+
+
+
+
+
+
+- json(net) file holds patterns: ={'top': [{'comment': 'replacement'}], 'cell': [...], 'prefix_top': '## nbmd:top:', 'prefix_cell': '## nbmd:'}=
+- Read pattern file from command line or appdirs/config
+- add entry point
+- Create precommit hook https://pre-commit.com/#new-hooks
+- one file at a time
+-
