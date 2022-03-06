@@ -3,42 +3,53 @@
 
 Modify Jupyter notebook metadata via cell comments
 
-* Notes
+* Implementation notes
 
+** Magic comments
 
-** goals
+Look like
 
-- provide base config, allow overrides and additions
-- config should give mapping from comment tag -> json
-- +mapping should be able to take arg => config needs to contain functions+
+#+begin_example python
+## nbmd:nbmake_skip
+#+end_example
 
+Where the prefix =nbmd:= is configurable.
 
-*** approach1
+=nbmake_skip= is referred to as the ~key~ in this documentation
 
-- top level function with arg -> returns all mappings
-- construct snippet as {'actual_tag': config(arg)[tag]} and evaluate it
+** Config
 
+We use [[https://jsonnet.org/][Jsonnet]] to store the base configuration and merge it with any
+user-specified config. It provides a mapping from ~key~ to the metadata json
+that will get merged into the notebook
 
+#+begin_example json
+{
+  nbmake_raises: {
+    tags: ['raises-exception'],
+  }
+}
+#+end_example
 
+** Removing magic comments
 
+When ~nbmd~ acts on a notebook or cell's metadata, it records the *top-level* keys
+that it modified. On future runs, it first clears these keys from the metadata
+before re-applying the current magic comments. This has the effect of handling
+removals/updates of the comments.
 
+However, since we only track the top-level keys and then blow them away,
+modifications to these keys made by other programs will be lost.
 
+In general this should be ok: different applications should namespace and not
+collide on the metadata keys they manage, and if they do collide, the "correct"
+behavior is not clearly defined.
 
+*** Other options considered:
 
-- base.jsonnet is the base config
-- another config can be provided
-- create a combined snippet 'user + base' or just use base & eval with null arg
-- this gives us the prefix
-- now we parse the notebook looking for metadata comments, and construct a new snippet with all the actual comments, and
-
-
-
-
-
-
-- json(net) file holds patterns: ={'top': [{'comment': 'replacement'}], 'cell': [...], 'prefix_top': '## nbmd:top:', 'prefix_cell': '## nbmd:'}=
-- Read pattern file from command line or appdirs/config
-- add entry point
-- Create precommit hook https://pre-commit.com/#new-hooks
-- one file at a time
--
+1. search metadata for all the keys' metadata in the config and remove these if
+   they exist -> inefficient, hard to "deep unmerge"
+2. record the full applied json (instead of just the top-level keys) -> hard to
+   "deep unmerge"
+3. wipe all metadata -> some keys (for example in top-level metadata,
+   ~kernelspec~) need to be preserved
