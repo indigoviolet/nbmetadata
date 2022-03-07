@@ -1,11 +1,25 @@
 
 * nbmetadata
 
-Modify Jupyter notebook metadata via cell comments
+Modify Jupyter notebook metadata via cell comments.
 
-* Implementation notes
+For example, a comment like
 
-** Magic comments
+#+begin_example python
+## nbmd:nbmake_skip
+#+end_example
+
+will add the =skip-execution= tag from https://github.com/treebeardtech/nbmake.
+
+This is useful for notebook clients that cannot add tags or edit metadata (eg.
+Emacs). It is also valuable as a user-visible declaration of metadata, instead
+of being hidden in the notebook JSON.
+
+* Demo
+
+See =tests/demo.ipynb= for a demo
+
+* Magic comments
 
 Look like
 
@@ -17,7 +31,7 @@ Where the prefix =nbmd:= is configurable.
 
 =nbmake_skip= is referred to as the ~key~ in this documentation
 
-** Config
+* Config
 
 We use [[https://jsonnet.org/][Jsonnet]] to store the base configuration and merge it with any
 user-specified config. It provides a mapping from ~key~ to the metadata json
@@ -30,6 +44,21 @@ that will get merged into the notebook
   }
 }
 #+end_example
+
+
+* Notes
+
+** Running tests
+
+This was built to help with https://github.com/treebeardtech/nbmake, so it only
+seems right to test it with nbmake and nbmd.
+
+See =tests/demo.ipynb=
+
+#+begin_src shell
+pytest --nbmake tests/demo.ipynb
+#+end_src
+
 
 ** Removing magic comments
 
@@ -47,9 +76,9 @@ behavior is not clearly defined.
 
 *** Other options considered:
 
-1. search metadata for all the keys' metadata in the config and remove these if
-   they exist -> inefficient, hard to "deep unmerge"
-2. record the full applied json (instead of just the top-level keys) -> hard to
+1. search metadata for all the keys' metadata (that are in the config) and
+   remove these if they exist: this is inefficient, hard to "deep unmerge"
+2. record the full applied json (instead of just the top-level keys): hard to
    "deep unmerge"
-3. wipe all metadata -> some keys (for example in top-level metadata,
+3. wipe _all_ metadata: some keys (for example in top-level metadata,
    ~kernelspec~) need to be preserved

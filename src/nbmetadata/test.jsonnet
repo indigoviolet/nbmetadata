@@ -1,1 +1,0 @@
-{ nbmake_raises: "bar" }

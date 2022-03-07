@@ -19,6 +19,9 @@ mypy = "^0.931"
 ipykernel = "^6.9.1"
 icecream = "^2.1.2"
 ipdb = "^0.13.9"
+pytest = "6.2.5"
+nbmake = "^1.2"
+
 
 [tool.poetry.scripts]
 nbmd = 'nbmetadata.app:run'

@@ -100,6 +100,9 @@ def main(
     comment_re = re.compile(rf"^\s*#+\s*{prefix}(?P<key>\w+)", re.MULTILINE)
     merger = Merger()
 
+    # Note (https://stackoverflow.com/a/2031100/14044156): if this succeeds, a
+    # new file will be moved to have this name, but any existing filehandles
+    # will point at the original inode
     with InPlace(name=notebook_file, backup_ext=".bak") as nf:
         modified = False
 
