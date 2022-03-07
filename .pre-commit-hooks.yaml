@@ -1,0 +1,6 @@
+- id: nbmetadata
+  name: nbmetadata
+  description: 'nbmetadata: Modify Jupyter notebook metadata via cell comments'
+  entry: nbmd
+  language: python
+  types: [jupyter]

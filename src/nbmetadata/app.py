@@ -12,11 +12,9 @@ from functools import cached_property
 import nbformat
 from deepmerge import Merger as DeepMerger
 from in_place import InPlace
-import icecream
 from contextlib import contextmanager
 from copy import deepcopy
 
-icecream.install()
 
 run = typer.Typer()
 
@@ -107,6 +105,7 @@ def main(
     notebook_files: List[Path],
     prefix: str = "nbmd:",
     config_file: Optional[Path] = None,
+    backup: bool = True,
 ):
     cfg = Config(user_config_file=config_file)
     comment_re = re.compile(rf"^\s*#+\s*{prefix}(?P<key>\w+)", re.MULTILINE)
@@ -116,7 +115,10 @@ def main(
         # Note (https://stackoverflow.com/a/2031100/14044156): if this succeeds, a
         # new file will be moved to have this name, but any existing filehandles
         # will point at the original inode
-        with InPlace(name=notebook_file, backup_ext=".bak") as nf:
+
+        # backup & backup_ext are mutually exclusive in InPlace()
+        backup_kwargs = dict(backup=None) if backup is False else dict(backup_ext="~")
+        with InPlace(name=notebook_file, **backup_kwargs) as nf:
             notebook = nbformat.read(nf, as_version=nbformat.NO_CONVERT)
             tm = TrackModification()
             with tm.track(notebook.metadata) as nm:
