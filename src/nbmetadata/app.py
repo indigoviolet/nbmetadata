@@ -13,6 +13,8 @@ import nbformat
 from deepmerge import Merger as DeepMerger
 from in_place import InPlace
 import icecream
+from contextlib import contextmanager
+from copy import deepcopy
 
 icecream.install()
 
@@ -64,20 +66,19 @@ class Merger:
         data.update({self.journal_key: list(data.keys())})
         self.deep_merger.merge(node, data)
 
-    def clean(self, node: nbformat.notebooknode.NotebookNode) -> bool:
+    def clean(self, node: nbformat.notebooknode.NotebookNode):
         if self.journal_key not in node:
-            return False
+            return
         keys_to_clean = node.pop(self.journal_key)
         for k in keys_to_clean:
             if k in node:
                 del node[k]
-        return True
 
 
 def add_metadata(
     key: str,
-    cell: nbformat.notebooknode.NotebookNode,
-    notebook: nbformat.notebooknode.NotebookNode,
+    cell_metadata: nbformat.notebooknode.NotebookNode,
+    notebook_metadata: nbformat.notebooknode.NotebookNode,
     config: Config,
     merger: Merger,
 ):
@@ -85,14 +86,25 @@ def add_metadata(
 
     if to_add.get("_top", False):
         del to_add["_top"]
-        merger.merge(notebook.metadata, to_add)
+        merger.merge(notebook_metadata, to_add)
     else:
-        merger.merge(cell.metadata, to_add)
+        merger.merge(cell_metadata, to_add)
+
+
+@dataclass
+class TrackModification:
+    modified: bool = field(init=False, default=False)
+
+    @contextmanager
+    def track(self, obj):
+        orig = deepcopy(obj)
+        yield obj
+        self.modified |= orig != obj
 
 
 @run.command()
 def main(
-    notebook_file: Path,
+    notebook_files: List[Path],
     prefix: str = "nbmd:",
     config_file: Optional[Path] = None,
 ):
@@ -100,24 +112,28 @@ def main(
     comment_re = re.compile(rf"^\s*#+\s*{prefix}(?P<key>\w+)", re.MULTILINE)
     merger = Merger()
 
-    # Note (https://stackoverflow.com/a/2031100/14044156): if this succeeds, a
-    # new file will be moved to have this name, but any existing filehandles
-    # will point at the original inode
-    with InPlace(name=notebook_file, backup_ext=".bak") as nf:
-        modified = False
+    for notebook_file in notebook_files:
+        # Note (https://stackoverflow.com/a/2031100/14044156): if this succeeds, a
+        # new file will be moved to have this name, but any existing filehandles
+        # will point at the original inode
+        with InPlace(name=notebook_file, backup_ext=".bak") as nf:
+            notebook = nbformat.read(nf, as_version=nbformat.NO_CONVERT)
+            tm = TrackModification()
+            with tm.track(notebook.metadata) as nm:
+                merger.clean(nm)
+                for cell in notebook.cells:
+                    with tm.track(cell.metadata) as cm:
+                        merger.clean(cm)
+                        keys = [
+                            m.group("key") for m in comment_re.finditer(cell.source)
+                        ]
+                        for k in set(keys):
+                            add_metadata(k, cm, nm, config=cfg, merger=merger)
 
-        notebook = nbformat.read(nf, as_version=nbformat.NO_CONVERT)
-        modified |= merger.clean(notebook.metadata)
-        for cell in notebook.cells:
-            modified |= merger.clean(cell.metadata)
-            keys = [m.group("key") for m in comment_re.finditer(cell.source)]
-            for k in set(keys):
-                add_metadata(k, cell, notebook, config=cfg, merger=merger)
-                modified = True
-        if modified:
-            nbformat.write(notebook, nf)
-        else:
-            nf.rollback()
+            if tm.modified:
+                nbformat.write(notebook, nf)
+            else:
+                nf.rollback()
 
 
 if __name__ == "__main__":
