@@ -33,6 +33,8 @@ Where the prefix =nbmd:= is configurable.
 
 * Usage
 
+** Command line
+
 The executable is called ~nbmd~:
 
 #+begin_src shell
@@ -55,6 +57,18 @@ Options:
 
 A user config file (in JSON or [[https://jsonnet.org/][Jsonnet]]) can be specified at invocation time, and
 it will override/merge with the built-in config.
+
+** Pre-commit hook
+
+~nbmd~ can be used via [[https://pre-commit.com/][pre-commit]] hook:
+
+#+begin_src yaml
+repos:
+  - repo: https://github.com/indigoviolet/nbmetadata
+    rev: master
+    hooks:
+      - id: nbmetadata
+#+end_src
 
 * Config format
 
