@@ -31,7 +31,32 @@ Where the prefix =nbmd:= is configurable.
 
 =nbmake_skip= is referred to as the ~key~ in this documentation
 
-* Config
+* Usage
+
+The executable is called ~nbmd~:
+
+#+begin_src shell
+❯ nbmd --help
+Usage: nbmd [OPTIONS] NOTEBOOK_FILE
+
+Arguments:
+  NOTEBOOK_FILE  [required]
+
+Options:
+  --prefix TEXT         [default: nbmd:]
+  --config-file PATH
+  --install-completion  Install completion for the current shell.
+  --show-completion     Show completion for the current shell, to copy it or
+                        customize the installation.
+  --help                Show this message and exit.
+#+end_src
+
+~nbmd~ ships with the [[src/nbmetadata/config.jsonnet][config]] required for [[https://github.com/treebeardtech/nbmake][nbmake]].
+
+A user config file (in JSON or [[https://jsonnet.org/][Jsonnet]]) can be specified at invocation time, and
+it will override/merge with the built-in config.
+
+* Config format
 
 We use [[https://jsonnet.org/][Jsonnet]] to store the base configuration and merge it with any
 user-specified config. It provides a mapping from ~key~ to the metadata json
