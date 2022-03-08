@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/indigoviolet/nbmetadata
-    rev: master
+    rev: main
     hooks:
       - id: nbmetadata
   - repo: https://github.com/kynan/nbstripout

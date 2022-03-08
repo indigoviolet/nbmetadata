@@ -65,7 +65,7 @@ it will override/merge with the built-in config.
 #+begin_src yaml
 repos:
   - repo: https://github.com/indigoviolet/nbmetadata
-    rev: master
+    rev: main
     hooks:
       - id: nbmetadata
 #+end_src
